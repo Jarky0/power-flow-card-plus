@@ -1,10 +1,9 @@
 import { getBaseMainConfigSchema, secondaryInfoSchema, tapActionSchema } from "./_schema-base";
 import localize from "@/localize/localize";
 
-const mainSchema = {
-  ...getBaseMainConfigSchema(),
-  schema: [
-    ...getBaseMainConfigSchema().schema,
+// Flatten the schema: Move fields from mainSchema directly into individualSchema
+const baseMainSchemaFields = getBaseMainConfigSchema().schema;
+const extraMainSchemaFields = [
     {
       name: "color_value",
       label: "Color Value",
@@ -80,15 +79,17 @@ const mainSchema = {
         conditional_entity: { $ne: "" }
       }
     },
-  ],
-};
+];
+
 
 export const individualSchema = [
   {
     name: "entity",
+    label: "Entity (Primary)",
     selector: { entity: {} },
   },
-  mainSchema,
+  ...baseMainSchemaFields,
+  ...extraMainSchemaFields,
   {
     name: "color",
     label: "Color",

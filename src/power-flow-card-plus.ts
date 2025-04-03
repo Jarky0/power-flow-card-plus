@@ -59,7 +59,8 @@ const isConditionalEntityTrue = (
 
   // If an expectedState is provided, check for exact match
   if (expectedState !== undefined && expectedState !== null && expectedState !== '') {
-    return currentState === expectedState;
+    // Make the comparison case-insensitive
+    return currentState.toLowerCase() === expectedState.toLowerCase();
   }
 
   // Otherwise, use the default logic (original behavior)
