@@ -1,0 +1,188 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# AI Assistant Workflow Prompt: Power Flow Card Plus Conditional Releases (Non-Interactive Execution)
+
+## Context & Goal
+- **Role:** You are an AI assistant tasked with performing releases for the `power-flow-card-plus` GitHub project.
+- **Repository:** `https://github.com/Jarky0/power-flow-card-plus`
+- **Primary File:** `src/power-flow-card-plus.ts`
+- **Build Tool:** `rollup` (executed via `npm run build` or `pnpm run build` - use `npm run build` unless specified otherwise).
+- **Critical Constraint:** This project is distributed via HACS (Home Assistant Community Store). Adherence to HACS structure and configuration requirements is **mandatory** for successful releases.
+- **Assumption:** All commands should be executed from the root directory of the locally cloned repository (`<repository_path>`). Determine this path based on your execution context or prompt the user if necessary.
+- **Execution Constraint:** All commands executed via `run_terminal_cmd` **must be strictly non-interactive**. Do not execute commands that require real-time user input in the terminal (e.g., prompts for confirmation, editor invocation). User interactions (confirmations, providing descriptions) happen *before* command execution, managed by the AI assistant's interaction layer.
+- **Objective:** Automate the process of validating changes, bumping the version, building the project, ensuring HACS compatibility, creating a release artifact (ZIP), tagging the release in Git, publishing a formal GitHub Release with the artifact, and cleaning up local artifacts, all using non-interactive commands.
+
+## Variable Placeholders
+- `<repository_path>`: The absolute or relative path to the root of the local Git repository.
+- `[NEW_VERSION]`: The semantic version number for the new release (e.g., `0.2.14`), obtained from the user *before* step 2.
+- `[Change Description]`: A brief summary of the changes included in this release, obtained from the user *before* step 6.
+
+## Detailed Release Workflow
+
+### 1. Validate Changes
+* **Action:** Check the Git status non-interactively.
+    ```bash
+    # Check which files have been modified (non-interactive)
+    run_terminal_cmd cd <repository_path> && git status
+    ```
+* **Pre-condition Check:** Present the output of `git status` to the user. Obtain confirmation from the user that all intended changes are included and that the release process should proceed. **Do not proceed to Step 2 without explicit user confirmation.**
+
+### 2. Update Version
+* **Action:** Read the current version from `package.json`.
+    ```bash
+    # Read package.json to find the current version
+    read_file <repository_path>/package.json
+    ```
+* **Pre-computation:** Determine the next logical semantic version. Propose this version (`[NEW_VERSION]`) to the user and obtain explicit confirmation or correction. **Use the confirmed `[NEW_VERSION]` value in subsequent steps.**
+* **Action:** Edit `package.json` to update the `version` field to the confirmed `[NEW_VERSION]`.
+    ```bash
+    # Edit package.json to bump the version (non-interactive file operation)
+    edit_file <repository_path>/package.json
+    # Example instruction: Update line containing "version": to "version": "[NEW_VERSION]",
+    ```
+* **Action:** Commit the `package.json` change non-interactively using the `-m` flag.
+    ```bash
+    # Commit the version bump (non-interactive)
+    run_terminal_cmd cd <repository_path> && git add package.json && git commit -m "Bump version to [NEW_VERSION]"
+    ```
+
+### 3. Create Build
+* **Action:** Run the build script non-interactively.
+    ```bash
+    # Execute the build process (non-interactive)
+    run_terminal_cmd cd <repository_path> && npm run build
+    ```
+* **Validation:** Verify that the build process completed successfully and that the expected output file (`dist/power-flow-card-plus.js`) exists. Report any build errors to the user.
+
+### 4. Ensure HACS Requirements (CRITICAL STEP!)
+* **Action: Copy JS to Root:** Copy the built JS file non-interactively.
+    ```bash
+    # Ensure the JS file exists in the root directory for HACS (non-interactive)
+    run_terminal_cmd cd <repository_path> && cp dist/power-flow-card-plus.js power-flow-card-plus.js
+    ```
+* **Action: Verify/Update `hacs.json`:** Read `hacs.json`. Ensure correctness. Obtain user confirmation for any necessary changes (like `homeassistant` version) *before* editing.
+    ```bash
+    # Read hacs.json to verify configuration
+    read_file <repository_path>/hacs.json
+    # Ensure the following key-value pairs exist and are correct:
+    # {
+    #   "name": "Power Flow Card Plus",
+    #   "render_readme": true,
+    #   "homeassistant": "2023.12.3", // Check if this needs updating
+    #   "filename": "power-flow-card-plus.js",
+    #   "content_in_root": true
+    # }
+    # If changes are needed (after user confirmation):
+    # edit_file <repository_path>/hacs.json
+    ```
+* **Action: Create/Verify Release Config:** Ensure the HACS release configuration directory and file exist using non-interactive commands.
+    ```bash
+    # Ensure .github/release/ directory exists (non-interactive)
+    run_terminal_cmd cd <repository_path> && mkdir -p .github/release
+
+    # Create or verify .github/release/config.json (non-interactive)
+    run_terminal_cmd cd <repository_path> && cat > .github/release/config.json << 'EOF'
+    {
+      "filename": "power-flow-card-plus.js",
+      "content_in_root": true,
+      "render_readme": true,
+      "hide_default_branch": true
+    }
+    EOF
+    ```
+* **Action: Commit HACS Files:** Commit the HACS-related file changes non-interactively using the `-m` flag.
+    ```bash
+    # Add all HACS-related files and commit (non-interactive)
+    run_terminal_cmd cd <repository_path> && git add power-flow-card-plus.js hacs.json .github/release/ && git commit -m "Update HACS configuration for v[NEW_VERSION]"
+    ```
+
+### 5. Create Release ZIP Archive
+* **Action:** Create the ZIP archive non-interactively.
+    ```bash
+    # Create the ZIP archive for the release (non-interactive)
+    run_terminal_cmd cd <repository_path> && zip -r power-flow-card-plus-v[NEW_VERSION].zip power-flow-card-plus.js hacs.json dist/ .github/release/ -x "*.git*" "*.DS_Store" "node_modules*"
+    ```
+* **Validation:** Verify that the ZIP file (`power-flow-card-plus-v[NEW_VERSION].zip`) was created successfully.
+
+### 6. Create and Push Git Tag
+* **Pre-computation:** Obtain the `[Change Description]` from the user for the release notes/tag message. **Use the confirmed `[Change Description]` value.**
+* **Action:** Create an annotated Git tag non-interactively using the `-a` and `-m` flags.
+* **Action:** Push commits and the tag non-interactively.
+    ```bash
+    # Create annotated tag and push (non-interactive)
+    run_terminal_cmd cd <repository_path> && git tag -a v[NEW_VERSION] -m "Version [NEW_VERSION] - [Change Description]" && git push origin main && git push origin v[NEW_VERSION]
+    ```
+
+### 7. Create GitHub Release
+* **Action:** Use the GitHub CLI (`gh`) non-interactively, providing all required arguments (`--title`, `--notes`, asset file).
+    ```bash
+    # Create the GitHub Release using gh CLI (non-interactive)
+    run_terminal_cmd cd <repository_path> && gh release create v[NEW_VERSION] --title "v[NEW_VERSION]" --notes "[Change Description]" power-flow-card-plus-v[NEW_VERSION].zip
+    ```
+* **Fallback:** If the `gh` command fails (due to auth issues, missing CLI, etc., which might otherwise trigger interactive prompts), **do not attempt interactive recovery**. Inform the user of the failure and provide the manual fallback instructions (see Error Handling).
+
+### 8. Validate, Clean Up, and Notify User
+* **Validation:** Attempt to verify the GitHub Release creation non-interactively. **Only proceed with cleanup if validation is successful.**
+* **Action: Clean up local ZIP file (on success):** Delete the local ZIP archive non-interactively.
+    ```bash
+    # Remove the local ZIP file after successful release (non-interactive)
+    run_terminal_cmd cd <repository_path> && rm power-flow-card-plus-v[NEW_VERSION].zip
+    ```
+* **Action: Report Outcome:** Report the final outcome to the user, including success/failure status and troubleshooting steps.
+
+## Error Handling and Troubleshooting
+
+1.  **Card Not Appearing/Updating in Home Assistant via HACS:**
+    * **Check:** Was a **GitHub Release** created (not just a Git tag)? HACS requires a full release with assets.
+    * **Check:** Does the repository structure comply with HACS requirements? Look for errors in the HACS logs in Home Assistant like `<Plugin Jarky0/power-flow-card-plus> Repository structure for vX.Y.Z is not compliant`.
+    * **Solution:** Rigorously verify that all steps in **"4. Ensure HACS Requirements"** were executed correctly:
+        * `power-flow-card-plus.js` exists in BOTH the root directory AND `dist/`.
+        * `hacs.json` is present and correctly configured (`"filename": "power-flow-card-plus.js"`, `"content_in_root": true`).
+        * `.github/release/config.json` exists and is correct.
+        * The release ZIP archive (`power-flow-card-plus-v[NEW_VERSION].zip`) attached to the GitHub Release contains: `power-flow-card-plus.js` (from root), `hacs.json`, the entire `dist/` directory, and the entire `.github/release/` directory.
+    * **Check:** Is the `documentationURL` in `src/utils/register-custom-card.ts` correct? (Less likely to affect HACS install, but indicates potential config issues).
+    * **Solution:** Ensure `documentationURL: "https://github.com/Jarky0/power-flow-card-plus"` is set correctly in the source code if problems persist.
+
+2.  **GitHub CLI (`gh`) Not Available or Fails:**
+    * **Solution:** Provide these manual instructions to the user:
+        1.  "Navigate to the repository page on GitHub: `https://github.com/Jarky0/power-flow-card-plus`"
+        2.  "Click on 'Releases' on the right-hand sidebar."
+        3.  "Click 'Draft a new release'."
+        4.  "In the 'Choose a tag' dropdown, select the tag you just pushed (`v[NEW_VERSION]`)."
+        5.  "Enter the release title (usually `v[NEW_VERSION]`)."
+        6.  "Paste the `[Change Description]` into the description text area."
+        7.  "In the 'Attach binaries' section, upload the ZIP file you created: `power-flow-card-plus-v[NEW_VERSION].zip`."
+        8.  "Ensure the 'This is a pre-release' checkbox is appropriately checked/unchecked."
+        9.  "Click 'Publish release'."
+    * **Note:** If the release is created manually, the AI assistant cannot automatically perform the cleanup step (deleting the local ZIP). Inform the user they may want to delete `power-flow-card-plus-v[NEW_VERSION].zip` manually.
+
+3.  **Versioning Mismatches:**
+    * **Check:** Do the versions in `package.json` (e.g., `0.2.14`), the Git tag (`v0.2.14`), and the GitHub Release title (`v0.2.14`) exactly match (including the `v` prefix for tag/release)?
+    * **Solution:** Correct any discrepancies before proceeding or guide the user on how to fix them (e.g., deleting and recreating tags/releases if necessary, though caution is advised).
+
+4.  **Build Fails (`npm run build`):**
+    * **Check:** Analyze the error output from the build command.
+    * **Solution:** Common causes include missing dependencies (suggest running `npm install` or `pnpm install`), syntax errors in the source code, or configuration issues with `rollup`. Report the specific error to the user for debugging.
+
+5.  **ZIP Creation Fails or is Incomplete:**
+    * **Check:** Do all specified files/directories (`power-flow-card-plus.js`, `hacs.json`, `dist/`, `.github/release/`) exist at `<repository_path>` before running the `zip` command?
+    * **Check:** Is the `zip` command syntax correct? Are the paths accurate?
+    * **Solution:** Correct paths or ensure prerequisite files/directories are present before attempting to create the ZIP archive again.
+
+
+## Notes for Future Releases
+- Use explicit, non-interactive terminal commands via `run_terminal_cmd`.
+- **ALWAYS** ensure a full **GitHub Release** is created non-interactively or via manual fallback.
+- Obtain necessary information (`[NEW_VERSION]`, `[Change Description]`, confirmations) from the user *before* executing dependent commands.
+- If the card fails to register in Home Assistant itself (distinct from HACS installation), check `src/utils/register-custom-card.ts`.
+- **Reiterate HACS Compatibility Checks:** If HACS issues arise, meticulously re-verify:
+    1.  JS file exists in **root** AND **dist**.
+    2.  `hacs.json` specifies `"filename": "power-flow-card-plus.js"` and `"content_in_root": true`.
+    3.  `.github/release/config.json` is present and correct.
+    4.  The **Release ZIP asset** on GitHub contains the root JS, `hacs.json`, `dist/`, and `.github/release/`.
+    5.  When encountering HACS structure errors, systematically review every step in section **"4. Ensure HACS Requirements"**.
+- Remember to clean up the local ZIP artifact after a successful automated release.
+

@@ -5,6 +5,7 @@
 
 ## system files
 .DS_Store
+*.lock
 
 ## npm
 /node_modules/
@@ -25,7 +26,8 @@ _site/
 /out-tsc/
 /.rollup.cache/
 .tsbuildinfo
+/power-flow-card-plus.js
 
 storybook-static
 custom-elements.json
-# pnpm-lock.yaml
+pnpm-lock.yaml
