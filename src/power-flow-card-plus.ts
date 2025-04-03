@@ -51,25 +51,47 @@ const isConditionalEntityTrue = (
   entityId: string | undefined,
   expectedState?: string | undefined
 ): boolean => {
+  // --- DEBUG START ---
+  console.log(`[PFCP Debug] Checking conditional entity: ID='${entityId}', ExpectedState='${expectedState}'`);
+  // --- DEBUG END ---
+
   if (!entityId) return true; // No conditional entity configured, always show
   const stateObj = hass.states[entityId];
-  if (!stateObj) return false; // Entity not found, hide
+  if (!stateObj) {
+     // --- DEBUG START ---
+     console.log(`[PFCP Debug] -> Entity not found in hass.states.`);
+     // --- DEBUG END ---
+     return false; // Entity not found, hide
+  }
 
   const currentState = stateObj.state;
+  // --- DEBUG START ---
+  console.log(`[PFCP Debug] -> Current state from HA: '${currentState}'`);
+  // --- DEBUG END ---
 
   // If an expectedState is provided, check for exact match
   if (expectedState !== undefined && expectedState !== null && expectedState !== '') {
     // Make the comparison case-insensitive
-    return currentState.toLowerCase() === expectedState.toLowerCase();
+    const comparisonResult = currentState.toLowerCase() === expectedState.toLowerCase();
+    // --- DEBUG START ---
+    console.log(`[PFCP Debug] -> Comparing '${currentState.toLowerCase()}' vs '${expectedState.toLowerCase()}'. Result: ${comparisonResult}`);
+    // --- DEBUG END ---
+    return comparisonResult;
   }
 
   // Otherwise, use the default logic (original behavior)
+  // --- Default logic debug (falls kein expectedState) ---
   const lowerCaseState = currentState.toLowerCase();
-  // Consider 'on', 'true', 'home', positive numbers as true
-  if (['on', 'true', 'home'].includes(lowerCaseState)) return true;
-  const numericState = parseFloat(lowerCaseState);
-  if (!isNaN(numericState) && numericState > 0) return true;
-  return false; // Otherwise, hide
+  const isDefaultTrue = ['on', 'true', 'home'].includes(lowerCaseState);
+  let isNumericTrue = false;
+  if (!isDefaultTrue) {
+      const numericState = parseFloat(lowerCaseState);
+      isNumericTrue = !isNaN(numericState) && numericState > 0;
+  }
+  const finalResult = isDefaultTrue || isNumericTrue;
+  console.log(`[PFCP Debug] -> Using default logic. Result: ${finalResult}`);
+  // --- DEBUG END ---
+  return finalResult;
 };
 
 const circleCircumference = 238.76104;
