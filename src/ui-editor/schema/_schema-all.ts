@@ -49,6 +49,7 @@ export const cardConfigStruct = assign(
       individual: optional(any()),
     }),
     sort_individual_devices: optional(boolean()),
+    grid_options: optional(any()),
   })
 );
 

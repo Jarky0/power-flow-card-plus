@@ -52,21 +52,21 @@ const isConditionalEntityTrue = (
   expectedState?: string | undefined
 ): boolean => {
   // --- DEBUG START ---
-  console.log(`[PFCP Debug] Checking conditional entity: ID='${entityId}', ExpectedState='${expectedState}'`);
+  // console.log(`[PFCP Debug] Checking conditional entity: ID='${entityId}', ExpectedState='${expectedState}'`);
   // --- DEBUG END ---
 
   if (!entityId) return true; // No conditional entity configured, always show
   const stateObj = hass.states[entityId];
   if (!stateObj) {
      // --- DEBUG START ---
-     console.log(`[PFCP Debug] -> Entity not found in hass.states.`);
+     // console.log(`[PFCP Debug] -> Entity not found in hass.states.`);
      // --- DEBUG END ---
      return false; // Entity not found, hide
   }
 
   const currentState = stateObj.state;
   // --- DEBUG START ---
-  console.log(`[PFCP Debug] -> Current state from HA: '${currentState}'`);
+  // console.log(`[PFCP Debug] -> Current state from HA: '${currentState}'`);
   // --- DEBUG END ---
 
   // If an expectedState is provided, check for exact match
@@ -74,7 +74,7 @@ const isConditionalEntityTrue = (
     // Make the comparison case-insensitive
     const comparisonResult = currentState.toLowerCase() === expectedState.toLowerCase();
     // --- DEBUG START ---
-    console.log(`[PFCP Debug] -> Comparing '${currentState.toLowerCase()}' vs '${expectedState.toLowerCase()}'. Result: ${comparisonResult}`);
+    // console.log(`[PFCP Debug] -> Comparing '${currentState.toLowerCase()}' vs '${expectedState.toLowerCase()}'. Result: ${comparisonResult}`);
     // --- DEBUG END ---
     return comparisonResult;
   }
@@ -89,7 +89,7 @@ const isConditionalEntityTrue = (
       isNumericTrue = !isNaN(numericState) && numericState > 0;
   }
   const finalResult = isDefaultTrue || isNumericTrue;
-  console.log(`[PFCP Debug] -> Using default logic. Result: ${finalResult}`);
+  // console.log(`[PFCP Debug] -> Using default logic. Result: ${finalResult}`);
   // --- DEBUG END ---
   return finalResult;
 };

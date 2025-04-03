@@ -71,14 +71,12 @@ export class PowerFlowCardPlusEditor extends LitElement implements LovelaceCardE
 
   public async setConfig(config: PowerFlowCardPlusConfig): Promise<void> {
     // --- DEBUG START ---
-    console.log("[PFCP Editor Debug] setConfig called. Received config:", JSON.stringify(config, null, 2));
+    // console.log("[PFCP Editor Debug] setConfig called. Received config:", JSON.stringify(config, null, 2));
     try {
       assert(config, cardConfigStruct);
-      console.log("[PFCP Editor Debug] Config assertion passed.");
+      // console.log("[PFCP Editor Debug] Config assertion passed.");
     } catch (e) {
-      console.error("[PFCP Editor Debug] Config assertion FAILED:", e);
-      // Optional: Hier könnte man versuchen, trotz Fehler einen Fallback zu machen oder den Fehler anzuzeigen.
-      // Fürs Debugging reicht erstmal die Konsolenausgabe.
+      // console.error("[PFCP Editor Debug] Config assertion FAILED:", e);
     }
     // --- DEBUG END ---
     this._config = config;
