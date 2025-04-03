@@ -207,6 +207,7 @@ The Individual fields must be an array of objects. Each object must follow the f
 | display_zero_state     | `boolean` | `true`                                         | If set to `true`, the state will be shown even if it is `0`. If set to `false`, the state will be hidden if it is `0`.                                                               |
 | color_value            | `boolean` | `false`                                        | If set to `true`, state text color will match the circle's color. If set to `false`, state text color will be the primary text color.                                                |
 | decimals               | `number`  | `0`                                            | Number of decimals to show in the corresponding state.                                                                                                                               |
+| conditional_entity     | `string`  | `undefined`                                    | Optional: Entity ID of a sensor (e.g., `binary_sensor`, `input_boolean`, `switch`). The individual device will only be shown if the state of this entity is considered 'true' (`'on'`, `'true'`, `'home'`, number > 0). |
 
 #### Home Configuration
 
@@ -488,7 +489,7 @@ At the end of the day these are two options and depending on what you're interes
 
 ### To-Do List
 
-Here is my to-do list containing a few enhancements I am planning in adding. The ones at the top are bigger priorities, so they’ll probably be available before the ones at the bottom.
+Here is my to-do list containing a few enhancements I am planning in adding. The ones at the top are bigger priorities, so they'll probably be available before the ones at the bottom.
 
 - [x] Change Tap Action Behavior to be compatible with Browser Mod
 - Fill the circles [#89](https://github.com/flixlix/power-flow-card-plus/issues/89)

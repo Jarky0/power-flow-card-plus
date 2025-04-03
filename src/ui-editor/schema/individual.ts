@@ -66,6 +66,11 @@ const mainSchema = {
       label: "Use Metadata",
       selector: { boolean: {} },
     },
+    {
+      name: "conditional_entity",
+      label: "Conditional Entity",
+      selector: { entity: {} },
+    },
   ],
 };
 

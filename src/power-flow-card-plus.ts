@@ -45,6 +45,19 @@ import { defaultValues, getDefaultConfig } from "./utils/get-default-config";
 import { registerCustomCard } from "./utils/register-custom-card";
 import { coerceNumber } from "./utils/utils";
 
+// Helper function to check the state of the conditional entity
+const isConditionalEntityTrue = (hass: HomeAssistant, entityId: string | undefined): boolean => {
+  if (!entityId) return true; // No conditional entity configured, always show
+  const state = hass.states[entityId];
+  if (!state) return false; // Entity not found, hide
+  const lowerCaseState = state.state.toLowerCase();
+  // Consider 'on', 'true', 'home', positive numbers as true
+  if (['on', 'true', 'home'].includes(lowerCaseState)) return true;
+  const numericState = parseFloat(lowerCaseState);
+  if (!isNaN(numericState) && numericState > 0) return true;
+  return false; // Otherwise, hide
+};
+
 const circleCircumference = 238.76104;
 
 registerCustomCard({
@@ -545,10 +558,15 @@ export class PowerFlowCardPlus extends LitElement {
 
     const sortedIndividualObjects = this._config.sort_individual_devices ? sortIndividualObjects(individualObjs) : individualObjs;
 
-    const individualFieldLeftTop = getTopLeftIndividual(sortedIndividualObjects);
-    const individualFieldLeftBottom = getBottomLeftIndividual(sortedIndividualObjects);
-    const individualFieldRightTop = getTopRightIndividual(sortedIndividualObjects);
-    const individualFieldRightBottom = getBottomRightIndividual(sortedIndividualObjects);
+    // Filter individual objects based on conditional_entity state
+    const visibleIndividualObjects = sortedIndividualObjects.filter(obj => 
+      isConditionalEntityTrue(this.hass, obj.conditional_entity)
+    );
+
+    const individualFieldLeftTop = getTopLeftIndividual(visibleIndividualObjects);
+    const individualFieldLeftBottom = getBottomLeftIndividual(visibleIndividualObjects);
+    const individualFieldRightTop = getTopRightIndividual(visibleIndividualObjects);
+    const individualFieldRightBottom = getBottomRightIndividual(visibleIndividualObjects);
 
     return html`
       <ha-card
