@@ -71,6 +71,15 @@ const mainSchema = {
       label: "Conditional Entity",
       selector: { entity: {} },
     },
+    {
+      name: "conditional_state",
+      label: "Conditional State (optional)",
+      selector: { text: {} },
+      description: "Show only if conditional entity has this state (e.g., 'on', 'playing', '10'). If empty, defaults to 'on', 'true', 'home', or positive numbers.",
+      show_if: {
+        conditional_entity: { $ne: "" }
+      }
+    },
   ],
 };
 

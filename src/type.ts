@@ -58,6 +58,7 @@ export type IndividualDeviceType = BaseConfigEntity & {
   decimals?: number;
   show_direction?: boolean;
   conditional_entity?: string;
+  conditional_state?: string;
 };
 
 export type EntityType = "battery" | "grid" | "solar" | "individual1" | "individual2" | "home" | "fossil_fuel_percentage";

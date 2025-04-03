@@ -46,11 +46,24 @@ import { registerCustomCard } from "./utils/register-custom-card";
 import { coerceNumber } from "./utils/utils";
 
 // Helper function to check the state of the conditional entity
-const isConditionalEntityTrue = (hass: HomeAssistant, entityId: string | undefined): boolean => {
+const isConditionalEntityTrue = (
+  hass: HomeAssistant,
+  entityId: string | undefined,
+  expectedState?: string | undefined
+): boolean => {
   if (!entityId) return true; // No conditional entity configured, always show
-  const state = hass.states[entityId];
-  if (!state) return false; // Entity not found, hide
-  const lowerCaseState = state.state.toLowerCase();
+  const stateObj = hass.states[entityId];
+  if (!stateObj) return false; // Entity not found, hide
+
+  const currentState = stateObj.state;
+
+  // If an expectedState is provided, check for exact match
+  if (expectedState !== undefined && expectedState !== null && expectedState !== '') {
+    return currentState === expectedState;
+  }
+
+  // Otherwise, use the default logic (original behavior)
+  const lowerCaseState = currentState.toLowerCase();
   // Consider 'on', 'true', 'home', positive numbers as true
   if (['on', 'true', 'home'].includes(lowerCaseState)) return true;
   const numericState = parseFloat(lowerCaseState);
@@ -560,8 +573,10 @@ export class PowerFlowCardPlus extends LitElement {
 
     // Filter individual objects based on conditional_entity state
     const visibleIndividualObjects = sortedIndividualObjects.filter(obj => 
-      isConditionalEntityTrue(this.hass, obj.conditional_entity)
+      isConditionalEntityTrue(this.hass, obj.conditional_entity, obj.field?.conditional_state)
     );
+
+    const hasIndividualObjects = visibleIndividualObjects.length > 0;
 
     const individualFieldLeftTop = getTopLeftIndividual(visibleIndividualObjects);
     const individualFieldLeftBottom = getBottomLeftIndividual(visibleIndividualObjects);
